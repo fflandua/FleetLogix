@@ -29,7 +29,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'database': 'Fleetlogix',
     'user': 'postgres',
-    'password': 'Epica2303',  # Cambiar por tu contraseña
+    'password': 'TU_PASSWORD',  # Cambiar por tu contraseña
     'port': 5432
 }
 
@@ -237,12 +237,12 @@ class DataGenerator:
         distances = {
             ('Bogotá', 'Medellín'): 440,
             ('Bogotá', 'Cali'): 460,
-            ('Bogotá', 'Barranquilla'): 1000,
+            ('Barranquilla', 'Bogotá'): 1000,
             ('Bogotá', 'Cartagena'): 1050,
-            ('Medellín', 'Cali'): 420,
-            ('Medellín', 'Barranquilla'): 640,
-            ('Medellín', 'Cartagena'): 640,
-            ('Cali', 'Barranquilla'): 1100,
+            ('Cali', 'Medellín'): 420,
+            ('Barranquilla', 'Medellín'): 640,
+            ('Cartagena', 'Medellín'): 640,
+            ('Barranquilla', 'Cali'): 1100,
             ('Cali', 'Cartagena'): 1100,
             ('Barranquilla', 'Cartagena'): 120
         }
@@ -258,7 +258,12 @@ class DataGenerator:
         self.cursor.execute("SELECT vehicle_id, capacity_kg FROM vehicles WHERE status = 'active'")
         vehicles = self.cursor.fetchall()
         
-        self.cursor.execute("SELECT driver_id FROM drivers WHERE status = 'active'")
+        self.cursor.execute("""
+            SELECT driver_id
+            FROM drivers
+            WHERE status = 'active'
+             AND license_expiry >= CURRENT_DATE
+        """)
         drivers = [d[0] for d in self.cursor.fetchall()]
         
         self.cursor.execute("SELECT route_id, distance_km, estimated_duration_hours FROM routes")
@@ -315,7 +320,7 @@ class DataGenerator:
             ))
             
             # Avanzar fecha (distribución uniforme)
-            current_date += timedelta(minutes=int(1440 * 2 * 365 / count))
+            current_date += timedelta(minutes=(1440 * 2 * 365 / count))
         
         # Insertar en batches
         query = """
@@ -410,7 +415,7 @@ class DataGenerator:
                     tracking_number,
                     customer_name,
                     delivery_address,
-                    round(package_weight, 2),
+                    round(float(package_weight), 2),
                     scheduled,
                     delivered,
                     delivery_status,
@@ -419,10 +424,10 @@ class DataGenerator:
                 
                 delivery_counter += 1
                 
-                if delivery_counter > count:
+                if delivery_counter >= count:
                     break
             
-            if delivery_counter > count:
+            if delivery_counter >= count:
                 break
         
         # Insertar en batches
