@@ -105,3 +105,12 @@ LINE 5: ...olina Castro Cuesta', 'Calle 169Z # 40-23, Cali', np.float64...
  Resumen guardado en generation_summary.json
 2026-08-31 18:02:04,523 - INFO - 
  Conexión cerrada
+2026-09-12 12:54:08,220 - ERROR -  Error al conectar: 'utf-8' codec can't decode byte 0xf3 in position 85: invalid continuation byte
+2026-09-12 12:54:08,220 - INFO - 
+ Conexión cerrada
+2026-09-12 13:34:38,128 - ERROR -  Error al conectar: 'utf-8' codec can't decode byte 0xf3 in position 85: invalid continuation byte
+2026-09-12 13:34:38,129 - INFO - 
+ Conexión cerrada
+2026-09-12 14:39:00,215 - ERROR -  Error al conectar: 'utf-8' codec can't decode byte 0xf3 in position 85: invalid continuation byte
+2026-09-12 14:39:00,216 - INFO - 
+ Conexión cerrada
