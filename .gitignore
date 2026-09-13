@@ -1,0 +1,12 @@
+# Archivos de Word editables y temporales
+*.docx
+~$*.docx
+
+# Logs
+*.log
+
+# Configuración local de VS Code
+.vscode/
+
+# Archivos generados automáticamente
+generation_summary.json
