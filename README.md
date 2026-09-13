@@ -1,163 +1,111 @@
 # FleetLogix
 
-Proyecto integrador de Data Analytics orientado al análisis y gestión de datos de una empresa de logística y transporte.
+Proyecto de Data Analytics orientado a la construcción de una infraestructura de datos para una empresa de logística y transporte.
 
-El proyecto utiliza una base de datos relacional en PostgreSQL para representar la operación de FleetLogix, incluyendo vehículos, conductores, rutas, viajes, entregas y mantenimientos.
+Esta etapa implementa una base de datos relacional en PostgreSQL, un proceso automatizado de generación y carga de datos sintéticos en Python y controles SQL para validar la calidad e integridad de los datos.
 
-## Objetivo del proyecto
+## Stack tecnológico
 
-Construir una solución de datos que permita almacenar, validar y analizar información relacionada con las operaciones logísticas de FleetLogix.
-
-En esta primera etapa se desarrolla el modelo relacional, la generación de datos sintéticos y los controles de calidad necesarios para garantizar la coherencia e integridad de los datos.
-
-## Tecnologías utilizadas
-
-- **PostgreSQL**: sistema de gestión de base de datos relacional.
-- **DBeaver**: administración de la base de datos y ejecución de consultas SQL.
-- **Python**: generación y carga automatizada de datos sintéticos.
-- **Faker**: generación de datos ficticios realistas.
-- **pandas**: herramienta para manipulación y procesamiento de datos.
-- **NumPy**: generación de valores y distribuciones probabilísticas.
+- **PostgreSQL 15+**: sistema de gestión de base de datos relacional.
+- **Python 3.10+**: generación y carga automatizada de datos.
+- **DBeaver**: administración y consulta de PostgreSQL.
+- **Faker**: generación de datos sintéticos.
+- **pandas / NumPy**: procesamiento y generación de datos.
 - **psycopg2**: conexión entre Python y PostgreSQL.
-- **tqdm**: visualización del progreso durante la generación masiva de datos.
-- **Visual Studio Code**: desarrollo y organización de los archivos del proyecto.
-- **Git y GitHub**: control de versiones y almacenamiento del repositorio.
+- **Jupyter Notebook**: entorno de análisis y desarrollo.
+- **Git / GitHub**: control de versiones y publicación del proyecto.
 
-## Instalación y ejecución
-
-### Requisitos
-
-Para ejecutar el proyecto se requiere:
-
-- Python 3
-- PostgreSQL
-- Una base de datos creada para FleetLogix
-
-### Dependencias de Python
-
-Instalar las librerías utilizadas por el generador:
-
-```bash
-pip install pandas numpy faker psycopg2-binary tqdm
-```
-
-### Configuración de la base de datos
-
-Antes de ejecutar el generador, configurar los datos de conexión a PostgreSQL en `DB_CONFIG`:
-
-```python
-DB_CONFIG = {
-    'host': 'localhost',
-    'database': 'Fleetlogix',
-    'user': 'postgres',
-    'password': 'TU_PASSWORD',
-    'port': '5432'
-}
-```
-
-> La contraseña debe reemplazarse por la correspondiente al entorno local y no debe publicarse en el repositorio.
-
-### Ejecución
-
-Una vez creada la estructura de la base de datos y configurada la conexión, ejecutar el generador desde la carpeta `python`:
-
-```bash
-cd python
-python A1-01_data_generation_estudiantes.py
-```
-
-Al finalizar, el script muestra un resumen con la cantidad de registros generados y los resultados de las validaciones incorporadas al proceso.
-
-Las validaciones adicionales sobre la base cargada pueden ejecutarse mediante:
-
-`sql/validacion_calidad_datos.sql`
-
-## Estructura del proyecto
-
-El proyecto se organiza en diferentes carpetas según la función de cada archivo:
+## Estructura del repositorio
 
 ```text
 FleetLogix/
 ├── docs/
-│   ├── modelo_relacional.md
+│   ├── README.pdf
 │   └── diagrama_er_fleetlogix.png
+│
 ├── python/
 │   └── A1-01_data_generation_estudiantes.py
+│
 ├── sql/
+│   ├── fleetlogix_db_schema.sql
 │   └── validacion_calidad_datos.sql
+│
 └── README.md
 ```
 
-- **docs/**: documentación del modelo relacional y diagrama entidad-relación.
-- **python/**: script utilizado para la generación y carga de datos sintéticos.
-- **sql/**: consultas utilizadas para validar la calidad e integridad de los datos.
+## Modelo de datos
+
+El modelo relacional está compuesto por seis tablas:
+
+`vehicles` · `drivers` · `routes` · `trips` · `deliveries` · `maintenance`
+
+La estructura de la base de datos, incluyendo tablas, claves primarias, claves foráneas, constraints e índices, se encuentra definida en:
+
+[`sql/fleetlogix_db_schema.sql`](sql/fleetlogix_db_schema.sql)
+
+El modelo establece cinco relaciones principales:
+
+- `vehicles` → `trips`
+- `drivers` → `trips`
+- `routes` → `trips`
+- `trips` → `deliveries`
+- `vehicles` → `maintenance`
+
+El diagrama entidad-relación puede consultarse en:
+
+[`docs/diagrama_er_fleetlogix.png`](docs/diagrama_er_fleetlogix.png)
+
+La documentación completa del modelo y del desarrollo del proyecto se encuentra en:
+
+[`docs/README.pdf`](docs/README.pdf)
 
 ## Generación de datos sintéticos
 
-La generación de datos fue diseñada para simular una operación logística coherente. Los valores no se generan de forma completamente independiente: cada tabla utiliza información de las tablas relacionadas para construir registros consistentes.
+La generación y carga automatizada se realiza mediante:
 
-### Lógica de generación
+[`python/A1-01_data_generation_estudiantes.py`](python/A1-01_data_generation_estudiantes.py)
 
-**Vehículos**
+El generador construye los datos respetando las dependencias entre las entidades del modelo para mantener coherencia entre los registros.
 
-La flota se genera utilizando cuatro tipos de vehículos: Camión Grande, Camión Mediano, Van y Motocicleta. Cada vehículo posee características operativas como capacidad de carga, tipo de combustible, fecha de adquisición y estado.
+Entre las principales reglas implementadas se encuentran:
 
-**Conductores**
-
-Los conductores se generan con datos personales ficticios, código de empleado, número de licencia, fecha de vencimiento, fecha de contratación y estado. Para la asignación de viajes se utilizan conductores activos cuya licencia se encuentre vigente.
-
-**Rutas**
-
-Las rutas conectan cinco ciudades principales. Cada ruta contiene una ciudad de origen y destino, distancia, duración estimada y costo de peajes. Estos valores posteriormente son utilizados para generar las características de los viajes.
-
-**Viajes**
-
-Los viajes se distribuyen a lo largo de dos años de operación histórica.
-
-La hora de salida no se elige con una distribución uniforme. El generador asigna diferentes probabilidades a las 24 horas del día para representar períodos con mayor y menor actividad logística.
-
-Cada viaje utiliza un vehículo, un conductor y una ruta existentes. A partir de estos datos se generan otras variables relacionadas:
-
-- La duración del viaje toma como referencia la duración estimada de la ruta.
-- La fecha y hora de llegada se calcula a partir de la salida y la duración del viaje, garantizando que la llegada sea posterior a la salida.
-- El consumo de combustible se calcula en función de la distancia recorrida.
-- El peso transportado se genera entre el 40% y el 90% de la capacidad del vehículo, evitando superar su capacidad máxima.
-
-**Entregas**
-
-Cada entrega pertenece a un viaje existente. La cantidad de entregas por viaje se genera entre 2 y 6, siendo 4 la cantidad más probable.
-
-El peso de los paquetes no se genera independientemente del viaje. El generador distribuye aproximadamente el 95% del peso transportado entre sus entregas, dejando un margen para elementos operativos como embalajes, pallets u otros componentes de carga.
-
-Las fechas programadas y efectivas de entrega también se generan en relación con el viaje, permitiendo posteriormente analizar cumplimiento y retrasos.
-
-**Mantenimiento**
-
-Los registros de mantenimiento se generan a partir del historial de viajes de cada vehículo, utilizando como referencia aproximadamente un mantenimiento cada 20 viajes.
-
-Los tipos de mantenimiento incluyen cambio de aceite, revisión de frenos, cambio de llantas, mantenimiento general, revisión de motor y alineación y balanceo.
+- utilización de vehículos y conductores activos para generar viajes;
+- asignación de rutas existentes;
+- distribución de 100.000 viajes a lo largo de aproximadamente dos años;
+- distribución horaria no uniforme para representar diferentes niveles de actividad;
+- peso transportado limitado por la capacidad del vehículo;
+- generación de entre 2 y 6 entregas por viaje, siendo 4 la cantidad más probable;
+- entregas vinculadas a viajes existentes;
+- distribución del peso de los paquetes en función del peso transportado;
+- mantenimientos generados a partir del historial de viajes de cada vehículo.
 
 ### Resultado de la generación
 
 | Tabla | Registros |
 |---|---:|
-| vehicles | 200 |
-| drivers | 400 |
-| routes | 48 |
-| trips | 100000 |
-| deliveries | 400000 |
-| maintenance | 4920 |
-| **Total** | **505568** |
+| `vehicles` | 200 |
+| `drivers` | 400 |
+| `routes` | 50 |
+| `trips` | 100.000 |
+| `deliveries` | 400.000 |
+| `maintenance` | 4.913 |
+| **Total** | **505.563** |
 
-## Control de calidad de datos
+## Control de calidad
 
-Una vez finalizada la carga, se realizan controles sobre la base de datos para verificar que los registros generados mantengan las reglas definidas por el modelo.
+Las validaciones posteriores a la generación y carga se encuentran en:
 
-Las validaciones SQL se encuentran en `sql/validacion_calidad_datos.sql`.
+[`sql/validacion_calidad_datos.sql`](sql/validacion_calidad_datos.sql)
+
+El script realiza tres grupos de controles:
+
+### Volumen de datos
+
+Verifica la cantidad de registros almacenados en cada una de las seis tablas.
 
 ### Integridad referencial
 
-Se verifica la existencia de registros huérfanos en las cinco relaciones del modelo:
+Comprueba las cinco relaciones del modelo para detectar posibles registros sin correspondencia:
 
 - `trips.vehicle_id` → `vehicles.vehicle_id`
 - `trips.driver_id` → `drivers.driver_id`
@@ -165,47 +113,85 @@ Se verifica la existencia de registros huérfanos en las cinco relaciones del mo
 - `deliveries.trip_id` → `trips.trip_id`
 - `maintenance.vehicle_id` → `vehicles.vehicle_id`
 
-La validación sobre los datos generados no detectó registros huérfanos.
+Las validaciones realizadas no detectaron registros con referencias inválidas.
 
 ### Consistencia temporal
 
-Se controla que la fecha y hora de llegada de cada viaje sea siempre posterior a su fecha y hora de salida:
+Verifica que la fecha y hora de llegada de cada viaje sea posterior a su fecha y hora de salida.
 
-`arrival_datetime > departure_datetime`
+Las validaciones realizadas no detectaron viajes con fechas inconsistentes.
 
-La validación no detectó viajes con fechas inconsistentes.
+## Instalación y ejecución
 
-### Control de carga
+### 1. Requisitos
 
-El proceso de generación registra mediante logs las distintas etapas de ejecución, incluyendo conexión a PostgreSQL, generación de registros, progreso de inserción, validaciones, errores y cierre de la conexión.
+- PostgreSQL 15+
+- Python 3.10+
+- DBeaver o cliente compatible con PostgreSQL
+
+### 2. Crear la base de datos
+
+Crear una base PostgreSQL llamada:
+
+```text
+fleetlogix
+```
+
+### 3. Crear el modelo relacional
+
+Ejecutar sobre la base `fleetlogix`:
+
+[`sql/fleetlogix_db_schema.sql`](sql/fleetlogix_db_schema.sql)
+
+Este script crea las seis tablas y sus relaciones.
+
+### 4. Instalar las dependencias de Python
+
+```bash
+pip install psycopg2-binary pandas numpy faker tabulate jupyter notebook
+```
+
+### 5. Configurar la conexión
+
+Configurar los parámetros de conexión a PostgreSQL utilizados por:
+
+[`python/A1-01_data_generation_estudiantes.py`](python/A1-01_data_generation_estudiantes.py)
+
+> Las credenciales de acceso a PostgreSQL no deben publicarse en el repositorio.
+
+### 6. Generar y cargar los datos
+
+Desde la raíz del proyecto:
+
+```bash
+python python/A1-01_data_generation_estudiantes.py
+```
+
+El script genera los datos sintéticos y los carga en PostgreSQL respetando las relaciones del modelo.
+
+### 7. Ejecutar los controles de calidad
+
+Una vez finalizada la carga, ejecutar:
+
+[`sql/validacion_calidad_datos.sql`](sql/validacion_calidad_datos.sql)
+
+El script permite verificar los volúmenes generados, la integridad referencial y la consistencia temporal de los viajes.
 
 ## Documentación
 
-La documentación técnica del proyecto se encuentra en la carpeta `docs/`:
+La documentación completa del proyecto se encuentra disponible en:
 
-- `modelo_relacional.md`: descripción de tablas, relaciones y constraints del modelo.
-- `diagrama_er_fleetlogix.png`: representación visual del modelo entidad-relación.
+[`docs/README.pdf`](docs/README.pdf)
 
-El proyecto también incluye `sql/validacion_calidad_datos.sql`, utilizado para verificar los volúmenes cargados, la integridad referencial y la consistencia temporal de los datos.
+Incluye el análisis del modelo relacional, diagrama ER, descripción de tablas y constraints, patrones de negocio, generación de datos sintéticos, ajustes realizados, controles de calidad y mejoras identificadas.
 
 ## Mejoras futuras
 
-El modelo actual permite representar la operación básica de FleetLogix y constituye una base para futuros análisis. A partir de su estructura y de los datos generados se identifican oportunidades de mejora tanto técnicas como de negocio.
+Entre las principales mejoras técnicas identificadas se encuentran:
 
-### Mejoras del modelo y generación de datos
-
-- Incorporar el tipo de licencia del conductor y definir su compatibilidad con los distintos tipos de vehículos.
-- Refinar el cálculo del consumo de combustible considerando el tipo de vehículo, la distancia recorrida y la carga transportada.
-- Mejorar la lógica de entregas demoradas para representar con mayor precisión el cumplimiento de los horarios programados.
-- Ampliar las validaciones automáticas del script Python para cubrir todas las relaciones del modelo.
-- Revisar los parámetros de generación de rutas y mantenimientos para permitir un mayor control sobre los volúmenes generados.
-
-### Mejoras orientadas al negocio
-
-- Incorporar información sobre costos operativos de cada viaje para analizar la rentabilidad de rutas y operaciones.
-- Registrar tarifas o ingresos asociados a las entregas para comparar ingresos y costos.
-- Incorporar información geográfica más detallada que permita analizar recorridos, zonas de entrega y eficiencia de las rutas.
-- Registrar causas de retrasos y entregas fallidas para identificar problemas recurrentes en la operación.
-- Incorporar métricas de utilización de los vehículos para detectar unidades con baja utilización o sobrecarga operativa.
-- Analizar el historial de mantenimiento junto con kilometraje, viajes realizados y costos para avanzar hacia estrategias de mantenimiento preventivo.
-- Incorporar indicadores de desempeño de conductores, rutas y vehículos que permitan comparar eficiencia, cumplimiento y costos.
+- incorporar el tipo de licencia del conductor y validar su compatibilidad con los vehículos;
+- controlar la disponibilidad de conductores para evitar viajes con horarios superpuestos;
+- refinar el cálculo del consumo de combustible según vehículo, distancia y carga;
+- mejorar la simulación de entregas demoradas;
+- ampliar las validaciones automáticas del proceso de generación;
+- incorporar nuevas variables operativas que permitan realizar análisis de costos, rentabilidad, utilización de vehículos y mantenimiento preventivo.

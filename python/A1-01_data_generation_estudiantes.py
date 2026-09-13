@@ -27,10 +27,11 @@ logging.basicConfig(
 # Configuración de conexión
 DB_CONFIG = {
     'host': 'localhost',
-    'database': 'Fleetlogix',
+    'database': 'fleetlogix',
     'user': 'postgres',
-    'password': 'TU_PASSWORD',  # Cambiar por tu contraseña
-    'port': 5432
+    'password': 'Epica2303',  # Cambiar por tu contraseña
+    'port': 5432,
+    'options': '-c client_encoding=UTF8'
 }
 
 # Inicializar Faker con semilla para reproducibilidad
@@ -183,7 +184,12 @@ class DataGenerator:
             for destination in self.cities:
                 if origin != destination:
                     # Múltiples rutas entre ciudades principales
-                    num_routes = 3 if origin == 'Bogotá' or destination == 'Bogotá' else 2
+                    if origin == 'Bogotá' or destination == 'Bogotá':
+                        num_routes = 3
+                    elif {origin, destination} == {'Medellín', 'Cali'}:
+                        num_routes = 3
+                    else:
+                        num_routes = 2
                     
                     for i in range(num_routes):
                         route_code = f"R{str(route_counter).zfill(3)}"
@@ -258,12 +264,7 @@ class DataGenerator:
         self.cursor.execute("SELECT vehicle_id, capacity_kg FROM vehicles WHERE status = 'active'")
         vehicles = self.cursor.fetchall()
         
-        self.cursor.execute("""
-            SELECT driver_id
-            FROM drivers
-            WHERE status = 'active'
-             AND license_expiry >= CURRENT_DATE
-        """)
+        self.cursor.execute("SELECT driver_id FROM drivers WHERE status = 'active'")
         drivers = [d[0] for d in self.cursor.fetchall()]
         
         self.cursor.execute("SELECT route_id, distance_km, estimated_duration_hours FROM routes")
@@ -320,7 +321,7 @@ class DataGenerator:
             ))
             
             # Avanzar fecha (distribución uniforme)
-            current_date += timedelta(minutes=(1440 * 2 * 365 / count))
+            current_date += timedelta(minutes=1440 * 2 * 365 / count)
         
         # Insertar en batches
         query = """
@@ -363,8 +364,8 @@ class DataGenerator:
                 t.total_weight_kg,
                 r.destination_city
             FROM trips t
-        JOIN routes r
-            ON t.route_id = r.route_id
+            JOIN routes r
+                ON t.route_id = r.route_id
         """)
         trips_data = self.cursor.fetchall()
         
