@@ -2,13 +2,15 @@
 
 Proyecto de Data Analytics orientado a la construcción de una infraestructura de datos para una empresa de logística y transporte.
 
-El proyecto implementa una base de datos relacional en PostgreSQL, procesos de generación y validación de datos sintéticos, análisis y optimización mediante SQL y un Data Warehouse en Snowflake alimentado mediante procesos ETL desarrollados en Python.
+El proyecto implementa una base de datos relacional en PostgreSQL, procesos de generación y validación de datos sintéticos, análisis y optimización mediante SQL, un Data Warehouse en Snowflake alimentado mediante procesos ETL desarrollados en Python y el diseño de una arquitectura cloud en AWS para el procesamiento de información de la flota en tiempo real.
 
 ## Stack tecnológico
 
 - **PostgreSQL 15+**: sistema de gestión de la base de datos operacional.
 - **Python 3.10+**: generación, procesamiento y carga de datos.
 - **Snowflake**: Data Warehouse y entorno analítico.
+- **AWS**: diseño de la arquitectura cloud.
+- **AWS Pricing Calculator**: estimación de costos de la arquitectura.
 - **DBeaver**: administración y consulta de PostgreSQL y Snowflake.
 - **Faker**: generación de datos sintéticos.
 - **pandas / NumPy**: procesamiento y transformación de datos.
@@ -20,23 +22,27 @@ El proyecto implementa una base de datos relacional en PostgreSQL, procesos de g
 
 ```text
 FleetLogix/
-
 ├── docs/
 │   ├── README.pdf
 │   ├── Manual_Consultas_SQL.pdf
-│   └── diagrama_er_fleetlogix.png
+│   ├── diagrama_er_fleetlogix.png
+│   ├── aws_architecture_diagram.png
+│   ├── entregables_y_paso_a_paso_AWS.pdf
+│   └── pasos_para_usar_SnowFlake.pdf
 │
 ├── python/
-│   ├── A1-01_data_generation_estudiantes.py
-│   ├── A3-05_etl_pipeline_estudiantes.py
-│   └── initial_load.py
+│   ├── Avance_1_DataGeneration.py
+│   ├── Avance_3_DataWarehouse.py
+│   ├── initial_load.py
+│   ├── A4-06_aws_setup.py
+│   └── A4-lambda_functions.py
 │
 ├── scripts/
 │   ├── 02_queries_analysis.sql
 │   ├── 03_optimization_indexes.sql
-│   ├── A3-04_dimensional_model.sql
-│   ├── fleetlogix_db_schema.sql
-│   └── validacion_calidad_datos.sql
+│   ├── 04_dimensional_model.sql
+│   ├── A1_validacion_calidad_datos.sql
+│   └── fleetlogix_db_schema.sql
 │
 └── README.md
 ```
@@ -71,7 +77,7 @@ La documentación completa del modelo y del desarrollo del proyecto se encuentra
 
 La generación y carga automatizada se realiza mediante:
 
-[`python/A1-01_data_generation_estudiantes.py`](python/A1-01_data_generation_estudiantes.py)
+[`python/Avance_1_DataGeneration.py`](python/Avance_1_DataGeneration.py)
 
 El generador construye los datos respetando las dependencias entre las entidades del modelo para mantener coherencia entre los registros.
 
@@ -103,7 +109,7 @@ Entre las principales reglas implementadas se encuentran:
 
 Las validaciones posteriores a la generación y carga se encuentran en:
 
-[`scripts/validacion_calidad_datos.sql`](scripts/validacion_calidad_datos.sql)
+[`scripts/A1_validacion_calidad_datos.sql`](scripts/A1_validacion_calidad_datos.sql)
 
 El script realiza tres grupos de controles:
 
@@ -161,7 +167,7 @@ El tercer avance incorpora una capa analítica separada de la base operacional m
 
 El modelo dimensional se encuentra definido en:
 
-[`scripts/A3-04_dimensional_model.sql`](scripts/A3-04_dimensional_model.sql)
+[`scripts/04_dimensional_model.sql`](scripts/04_dimensional_model.sql)
 
 Se implementó la base `FLEETLOGIX_DW` y el esquema `ANALYTICS` utilizando un esquema estrella cuya tabla central es `FACT_DELIVERIES`.
 
@@ -200,7 +206,7 @@ La carga validada en Snowflake produjo:
 
 Las nuevas entregas se incorporan al Data Warehouse mediante:
 
-[`python/A3-05_etl_pipeline_estudiantes.py`](python/A3-05_etl_pipeline_estudiantes.py)
+[`python/Avance_3_DataWarehouse.py`](python/Avance_3_DataWarehouse.py)
 
 El pipeline realiza las etapas de extracción, transformación y carga entre PostgreSQL y Snowflake.
 
@@ -217,6 +223,79 @@ Entre sus principales funciones se encuentran:
 
 El proceso queda programado para ejecutarse diariamente a las **02:00**.
 
+## Arquitectura cloud en AWS
+
+El cuarto avance plantea la modernización de la infraestructura de FleetLogix mediante el diseño y análisis de una arquitectura cloud en AWS.
+
+El alcance del avance es principalmente arquitectónico y documental, por lo que no requiere desplegar realmente los recursos en AWS.
+
+El flujo propuesto utiliza **Amazon API Gateway** como punto de entrada para las solicitudes y funciones **AWS Lambda** para procesar distintas situaciones de la operación.
+
+Se analizan tres funciones Lambda principales:
+
+- verificación del estado de una entrega;
+- cálculo del ETA de un vehículo;
+- detección de desvíos respecto de la ruta esperada.
+
+Los scripts proporcionados para analizar la configuración y el funcionamiento de estos componentes se encuentran en:
+
+[`python/A4-06_aws_setup.py`](python/A4-06_aws_setup.py)
+
+[`python/A4-lambda_functions.py`](python/A4-lambda_functions.py)
+
+### Almacenamiento
+
+La arquitectura utiliza distintos servicios según las necesidades de almacenamiento:
+
+- **Amazon RDS for PostgreSQL** para alojar la base de datos relacional;
+- **Amazon DynamoDB** para información operativa que necesita consultas y actualizaciones rápidas;
+- **Amazon S3** para archivos, respaldos e información histórica.
+
+El diseño contempla además la migración de la base PostgreSQL local hacia RDS y la configuración de backups automáticos.
+
+### Procesamiento de eventos y monitoreo
+
+La arquitectura incorpora otros servicios para automatizar el procesamiento y supervisar el funcionamiento del sistema:
+
+- **Amazon SNS** para el envío de alertas ante desvíos;
+- **Amazon EventBridge** para ejecuciones programadas, como el cálculo periódico del ETA;
+- **Amazon Kinesis Data Streams** para recibir actualizaciones de ubicación GPS;
+- **Amazon CloudWatch** para métricas, logs y alarmas;
+- **IAM** para administrar los permisos de acceso entre servicios.
+
+El diagrama de la arquitectura se encuentra disponible en:
+
+[`docs/aws_architecture_diagram.png`](docs/aws_architecture_diagram.png)
+
+### Estimación de costos
+
+La arquitectura fue evaluada mediante **AWS Pricing Calculator** utilizando la región **US East (N. Virginia)**.
+
+El escenario teórico utilizado produjo un costo estimado de **USD 50,15 mensuales**.
+
+Los costos obtenidos fueron:
+
+| Servicio | Costo mensual |
+|---|---:|
+| Amazon RDS for PostgreSQL | USD 15,44 |
+| AWS Lambda | USD 0,00 |
+| Amazon API Gateway | USD 0,50 |
+| Amazon DynamoDB | USD 0,59 |
+| Amazon S3 | USD 0,32 |
+| Amazon CloudWatch | USD 3,80 |
+| Amazon SNS | USD 0,00 |
+| Amazon EventBridge | USD 0,00 |
+| Amazon Kinesis Data Streams | USD 29,50 |
+| **Total mensual** | **USD 50,15** |
+
+Kinesis Data Streams representa el componente con mayor impacto en el costo. En una implementación real se podría revisar la frecuencia con la que se procesan las actualizaciones GPS o evaluar una alternativa que permita reducir este costo.
+
+La estimación anual obtenida fue de **USD 601,82**.
+
+La explicación completa de la arquitectura, los recursos, las funciones Lambda, seguridad, monitoreo y costos se encuentra en:
+
+[`docs/README.pdf`](docs/README.pdf)
+
 ## Instalación y ejecución
 
 ### 1. Requisitos
@@ -225,6 +304,8 @@ El proceso queda programado para ejecutarse diariamente a las **02:00**.
 - Python 3.10+
 - DBeaver o cliente compatible
 - Cuenta de Snowflake para la ejecución del Data Warehouse y el pipeline ETL
+
+> La arquitectura AWS correspondiente al cuarto avance es una propuesta de diseño y no requiere su implementación para ejecutar el proyecto.
 
 ### 2. Crear la base de datos operacional
 
@@ -259,20 +340,20 @@ Configurar los parámetros de conexión necesarios para PostgreSQL y Snowflake e
 Desde la raíz del proyecto:
 
 ```bash
-python python/A1-01_data_generation_estudiantes.py
+python python/Avance_1_DataGeneration.py
 ```
 
 ### 7. Ejecutar los controles de calidad
 
 Una vez finalizada la carga operacional, ejecutar:
 
-[`scripts/validacion_calidad_datos.sql`](scripts/validacion_calidad_datos.sql)
+[`scripts/A1_validacion_calidad_datos.sql`](scripts/A1_validacion_calidad_datos.sql)
 
 ### 8. Implementar el Data Warehouse
 
 Ejecutar en Snowflake:
 
-[`scripts/A3-04_dimensional_model.sql`](scripts/A3-04_dimensional_model.sql)
+[`scripts/04_dimensional_model.sql`](scripts/04_dimensional_model.sql)
 
 ### 9. Realizar la carga histórica inicial
 
@@ -285,7 +366,7 @@ La carga inicial se utiliza para poblar el Data Warehouse con los datos históri
 ### 10. Ejecutar el pipeline ETL
 
 ```bash
-python python/A3-05_etl_pipeline_estudiantes.py
+python python/Avance_3_DataWarehouse.py
 ```
 
 El pipeline queda activo y programado para ejecutar el proceso ETL diariamente a las 02:00.
@@ -296,11 +377,13 @@ La documentación completa del proyecto se encuentra disponible en:
 
 [`docs/README.pdf`](docs/README.pdf)
 
-El documento reúne el desarrollo de los tres avances realizados: implementación y validación de la base operacional, análisis y optimización SQL, construcción del Data Warehouse en Snowflake y desarrollo del pipeline ETL.
+El documento reúne el desarrollo de los cuatro avances realizados: implementación y validación de la base operacional, análisis y optimización SQL, construcción del Data Warehouse en Snowflake y desarrollo del pipeline ETL, y diseño y análisis de la arquitectura cloud en AWS.
 
 El detalle de las consultas SQL se encuentra disponible en:
 
 [`docs/Manual_Consultas_SQL.pdf`](docs/Manual_Consultas_SQL.pdf)
+
+También se conservan en `docs/` las guías proporcionadas para Snowflake y AWS utilizadas durante el desarrollo del proyecto.
 
 ## Mejoras futuras
 
@@ -310,4 +393,7 @@ Entre las mejoras identificadas durante el desarrollo se encuentran:
 - optimizar los procesos de carga para mayores volúmenes de información;
 - incorporar controles para evitar cargas duplicadas en el Data Warehouse;
 - ampliar el registro y seguimiento de las ejecuciones del pipeline;
-- continuar incorporando métricas que permitan analizar costos, rentabilidad y eficiencia operacional.
+- continuar incorporando métricas que permitan analizar costos, rentabilidad y eficiencia operacional;
+- revisar la frecuencia de procesamiento de datos GPS y el uso de Kinesis para reducir el costo de la arquitectura cloud;
+- aplicar permisos IAM de mínimo privilegio y restringir el acceso público a RDS en una implementación real;
+- implementar la arquitectura propuesta en AWS para validar su funcionamiento en un entorno real.
